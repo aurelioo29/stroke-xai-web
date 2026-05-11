@@ -16,13 +16,19 @@ export default function EEGPage() {
   const [loading, setLoading] = useState(false);
   const [warning, setWarning] = useState("");
 
+  const [graphChannel, setGraphChannel] = useState(1);
+  const [sectionCount, setSectionCount] = useState(4);
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
 
     setWarning("");
     setResult(null);
 
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      setFile(null);
+      return;
+    }
 
     const isCsv =
       selectedFile.type === "text/csv" ||
@@ -30,9 +36,7 @@ export default function EEGPage() {
 
     if (!isCsv) {
       setFile(null);
-      setWarning(
-        "File tidak valid. Upload hanya menerima file .csv untuk data EEG.",
-      );
+      setWarning("Invalid file. Please upload EEG data in .csv format.");
       e.target.value = "";
       return;
     }
@@ -42,7 +46,7 @@ export default function EEGPage() {
 
   const handleSubmit = async () => {
     if (!file) {
-      setWarning("Silakan upload file EEG berformat .csv terlebih dahulu.");
+      setWarning("Please upload an EEG CSV file first.");
       return;
     }
 
@@ -53,6 +57,8 @@ export default function EEGPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("graph_channel", String(graphChannel));
+      formData.append("section_count", String(sectionCount));
 
       const res = await API.post("/predict/eeg-xai-csv", formData, {
         headers: {
@@ -66,7 +72,7 @@ export default function EEGPage() {
 
       const message =
         error?.response?.data?.detail ||
-        "Gagal memproses EEG. Cek format CSV kamu, jangan sampai CSV-nya pura-pura sehat.";
+        "Failed to process EEG CSV. Please check the file format and backend response.";
 
       setWarning(message);
     } finally {
@@ -78,24 +84,23 @@ export default function EEGPage() {
     <>
       <PageHeader
         title="EEG XAI Analysis"
-        description="Upload EEG CSV, review waveform graph, prediction result, and highlighted influential signal segments."
+        description="Upload EEG CSV and review a single section-marked signal graph with concise AI explanation."
       />
 
       <SectionCard>
-        <div className="grid gap-5">
+        <div className="grid gap-5 md:grid-cols-[1.3fr_0.7fr]">
           <div>
             <label className="text-sm font-medium text-white">
               Upload EEG CSV
             </label>
 
-            <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-dashed border-white/15 bg-black/30 p-6 md:flex-row md:items-center md:justify-between">
+            <div className="mt-3 flex flex-col gap-4 rounded-2xl border border-dashed border-white/15 bg-black/30 p-5 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="text-sm text-white/80">
-                  Format wajib:{" "}
-                  <span className="font-semibold text-white">.csv</span>
+                  Accepted format: <span className="font-semibold">.csv</span>
                 </p>
                 <p className="mt-1 text-xs text-white/50">
-                  Kolom yang dibutuhkan: p1, p2, p3, p4
+                  Example columns: ch1_s1, ch1_s2, ch1_s3, ...
                 </p>
 
                 {file && (
@@ -134,6 +139,38 @@ export default function EEGPage() {
               </div>
             )}
           </div>
+
+          <div className="grid gap-4">
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <label className="text-xs uppercase tracking-wider text-white/50">
+                Channel
+              </label>
+              <select
+                value={graphChannel}
+                onChange={(e) => setGraphChannel(Number(e.target.value))}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none"
+              >
+                {Array.from({ length: 16 }, (_, i) => i + 1).map((ch) => (
+                  <option key={ch} value={ch}>
+                    Channel {ch}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-black/30 p-4">
+              <label className="text-xs uppercase tracking-wider text-white/50">
+                Sections
+              </label>
+              <select
+                value={sectionCount}
+                onChange={(e) => setSectionCount(Number(e.target.value))}
+                className="mt-2 w-full rounded-xl border border-white/10 bg-black px-4 py-3 text-sm text-white outline-none"
+              >
+                <option value={4}>4 Sections (P1–P4)</option>
+              </select>
+            </div>
+          </div>
         </div>
       </SectionCard>
 
@@ -141,7 +178,7 @@ export default function EEGPage() {
         <div className="mt-8">
           <EmptyState
             title="No analysis yet"
-            description="Upload EEG CSV to generate waveform visualization, prediction result, and important signal segments."
+            description="Upload EEG CSV to generate a single section-based EEG graph and concise AI explanation."
           />
         </div>
       )}
