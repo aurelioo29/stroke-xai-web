@@ -1,5 +1,6 @@
 import SectionCard from "@/components/shared/SectionCard";
 import EEGWaveformChart from "@/components/eeg/EEGWaveformChart";
+import EEGSubjectGraphs from "./EEGSubjectGraphs";
 
 const COLOR_MEANINGS = [
   { label: "Normal", color: "#2563eb" },
@@ -192,6 +193,26 @@ export default function EEGResultPanel({ result }) {
               <span className="text-xs text-white/70">{item.label}</span>
             </div>
           ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard>
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">Patient / Subject Graphs</h2>
+            <p className="mt-1 text-sm text-white/50">
+              Each graph represents the average EEG signal from all trials of
+              one subject.
+            </p>
+          </div>
+
+          <p className="text-xs text-white/40">
+            Total subjects: {result.subject_count || 0}
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <EEGSubjectGraphs subjectGraphs={result.subject_graphs || []} />
         </div>
       </SectionCard>
     </div>

@@ -19,14 +19,14 @@ export default function EEGPage() {
 
   const [graphChannel, setGraphChannel] = useState(1);
 
-  // Fixed setting sesuai request:
-  // P1 = s1-s20
-  // P2 = s21-s40
-  // P3 = s41-s60
-  // P4 = s61-s80
+  // Fixed setting:
+  // P1 = ch1_s1   - ch1_s256
+  // P2 = ch1_s257 - ch1_s512
+  // P3 = ch1_s513 - ch1_s768
+  // P4 = ch1_s769 - ch1_s1024
   const sectionCount = 4;
-  const sectionSize = 20;
-  const cycleCount = 2;
+  const sectionSize = 256;
+  const cycleCount = 1;
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files?.[0];
@@ -115,8 +115,8 @@ export default function EEGPage() {
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-white/50">
-                  Section format: P1=s1–s20, P2=s21–s40, P3=s41–s60, P4=s61–s80.
-                  Repeated for 2 cycles.
+                  Section format: P1=s1–s256, P2=s257–s512, P3=s513–s768,
+                  P4=s769–s1024.
                 </p>
 
                 {file && (
@@ -179,8 +179,8 @@ export default function EEGPage() {
 
             <div className="mt-4 rounded-xl border border-white/10 bg-black/30 p-3">
               <p className="text-xs leading-5 text-white/50">
-                Fixed section: 20 samples per P. Total shown: 2 cycles × 4
-                sections = 8 marked areas.
+                Fixed section: 1 cycle × 4 sections. Each section contains 256
+                samples.
               </p>
             </div>
           </div>
