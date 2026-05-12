@@ -15,14 +15,15 @@ import {
 const DEFAULT_SECTION_COLOR = "#2563eb";
 
 function getSectionColor(section, importantSegments = []) {
-  const exact = importantSegments.find(
-    (seg) =>
-      seg.name === section.name ||
-      seg.section === section.name ||
-      seg.label === section.name,
+  const exactById = importantSegments.find((seg) => seg.id === section.id);
+
+  if (exactById?.color) return exactById.color;
+
+  const exactByCycleAndName = importantSegments.find(
+    (seg) => seg.name === section.name && seg.cycle === section.cycle,
   );
 
-  if (exact?.color) return exact.color;
+  if (exactByCycleAndName?.color) return exactByCycleAndName.color;
 
   const overlap = importantSegments.find((seg) => {
     const segStart = seg.start ?? seg.start_sample ?? 0;
@@ -32,10 +33,6 @@ function getSectionColor(section, importantSegments = []) {
   });
 
   return overlap?.color || DEFAULT_SECTION_COLOR;
-}
-
-function buildSectionLabel(section) {
-  return `${section.name} (${section.start_sample}-${section.end_sample})`;
 }
 
 export default function EEGWaveformChart({
@@ -52,10 +49,10 @@ export default function EEGWaveformChart({
 
             return (
               <div
-                key={section.name}
+                key={section.id || `${section.cycle}-${section.name}`}
                 className="rounded-xl border bg-black/20 p-3"
                 style={{
-                  borderColor: `${color}55`,
+                  borderColor: `${color}66`,
                 }}
               >
                 <div className="flex items-center gap-2">
@@ -63,12 +60,14 @@ export default function EEGWaveformChart({
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: color }}
                   />
+
                   <p className="text-sm font-semibold text-white">
-                    {section.name}
+                    {section.display_name || section.name}
                   </p>
                 </div>
+
                 <p className="mt-1 text-xs text-white/50">
-                  {section.start_sample} - {section.end_sample}
+                  s{section.start_sample} - s{section.end_sample}
                 </p>
               </div>
             );
@@ -112,36 +111,36 @@ export default function EEGWaveformChart({
               labelFormatter={(value) => `Sample ${value}`}
               formatter={(value, name, props) => [
                 Number(value).toFixed(4),
-                props?.payload?.section || "EEG Signal",
+                props?.payload?.section_id || "EEG Signal",
               ]}
             />
 
-            {graphSections.map((section, index) => {
+            {graphSections.map((section) => {
               const color = getSectionColor(section, importantSegments);
 
               return (
                 <ReferenceArea
-                  key={`section-${section.name}`}
+                  key={`area-${section.id}`}
                   x1={section.start_sample}
                   x2={section.end_sample}
                   fill={color}
-                  fillOpacity={0.08}
+                  fillOpacity={0.12}
                   strokeOpacity={0}
                 />
               );
             })}
 
-            {graphSections.map((section, index) => (
+            {graphSections.map((section) => (
               <ReferenceLine
-                key={`line-${section.name}`}
+                key={`line-${section.id}`}
                 x={section.start_sample}
-                stroke="rgba(255,255,255,0.15)"
+                stroke="rgba(255,255,255,0.18)"
                 strokeDasharray="4 4"
                 label={{
-                  value: section.name,
+                  value: section.display_name || section.name,
                   position: "insideTopLeft",
                   fill: "#cbd5e1",
-                  fontSize: 12,
+                  fontSize: 11,
                 }}
               />
             ))}
@@ -149,7 +148,7 @@ export default function EEGWaveformChart({
             {graphSections.length > 0 && (
               <ReferenceLine
                 x={graphSections[graphSections.length - 1].end_sample}
-                stroke="rgba(255,255,255,0.15)"
+                stroke="rgba(255,255,255,0.18)"
                 strokeDasharray="4 4"
               />
             )}
