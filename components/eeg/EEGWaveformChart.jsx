@@ -12,7 +12,12 @@ import {
   ReferenceLine,
 } from "recharts";
 
-const DEFAULT_SECTION_COLOR = "#2563eb";
+const DEFAULT_SECTION_COLORS = {
+  P1: "#2563eb",
+  P2: "#22c55e",
+  P3: "#facc15",
+  P4: "#ef4444",
+};
 
 function getSectionColor(section, importantSegments = []) {
   const exactById = importantSegments.find((seg) => seg.id === section.id);
@@ -25,24 +30,22 @@ function getSectionColor(section, importantSegments = []) {
 
   if (exactByCycleAndName?.color) return exactByCycleAndName.color;
 
-  const overlap = importantSegments.find((seg) => {
-    const segStart = seg.start ?? seg.start_sample ?? 0;
-    const segEnd = seg.end ?? seg.end_sample ?? 0;
+  return DEFAULT_SECTION_COLORS[section.name] || "#2563eb";
+}
 
-    return segStart <= section.end_sample && segEnd >= section.start_sample;
-  });
-
-  return overlap?.color || DEFAULT_SECTION_COLOR;
+function getChartHeight(compact) {
+  return compact ? "h-[260px]" : "h-[420px]";
 }
 
 export default function EEGWaveformChart({
   data = [],
   graphSections = [],
   importantSegments = [],
+  compact = false,
 }) {
   return (
     <div className="w-full">
-      {graphSections.length > 0 && (
+      {graphSections.length > 0 && !compact && (
         <div className="mb-4 grid gap-3 md:grid-cols-4">
           {graphSections.map((section) => {
             const color = getSectionColor(section, importantSegments);
@@ -75,30 +78,39 @@ export default function EEGWaveformChart({
         </div>
       )}
 
-      <div className="h-[420px] w-full">
+      <div className={`${getChartHeight(compact)} w-full`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
 
             <XAxis
               dataKey="sample"
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
-              label={{
-                value: "Sample",
-                position: "insideBottom",
-                offset: -5,
-                fill: "#94a3b8",
-              }}
+              tick={{ fill: "#94a3b8", fontSize: compact ? 10 : 12 }}
+              label={
+                compact
+                  ? undefined
+                  : {
+                      value: "Sample",
+                      position: "insideBottom",
+                      offset: -5,
+                      fill: "#94a3b8",
+                    }
+              }
             />
 
             <YAxis
-              tick={{ fill: "#94a3b8", fontSize: 12 }}
-              label={{
-                value: "Amplitude",
-                angle: -90,
-                position: "insideLeft",
-                fill: "#94a3b8",
-              }}
+              tick={{ fill: "#94a3b8", fontSize: compact ? 10 : 12 }}
+              width={compact ? 38 : 60}
+              label={
+                compact
+                  ? undefined
+                  : {
+                      value: "Amplitude",
+                      angle: -90,
+                      position: "insideLeft",
+                      fill: "#94a3b8",
+                    }
+              }
             />
 
             <Tooltip
@@ -124,7 +136,7 @@ export default function EEGWaveformChart({
                   x1={section.start_sample}
                   x2={section.end_sample}
                   fill={color}
-                  fillOpacity={0.12}
+                  fillOpacity={compact ? 0.07 : 0.1}
                   strokeOpacity={0}
                 />
               );
@@ -134,21 +146,25 @@ export default function EEGWaveformChart({
               <ReferenceLine
                 key={`line-${section.id}`}
                 x={section.start_sample}
-                stroke="rgba(255,255,255,0.18)"
+                stroke="rgba(255,255,255,0.2)"
                 strokeDasharray="4 4"
-                label={{
-                  value: section.display_name || section.name,
-                  position: "insideTopLeft",
-                  fill: "#cbd5e1",
-                  fontSize: 11,
-                }}
+                label={
+                  compact
+                    ? undefined
+                    : {
+                        value: section.display_name || section.name,
+                        position: "insideTopLeft",
+                        fill: "#cbd5e1",
+                        fontSize: 11,
+                      }
+                }
               />
             ))}
 
             {graphSections.length > 0 && (
               <ReferenceLine
                 x={graphSections[graphSections.length - 1].end_sample}
-                stroke="rgba(255,255,255,0.18)"
+                stroke="rgba(255,255,255,0.2)"
                 strokeDasharray="4 4"
               />
             )}
@@ -159,7 +175,7 @@ export default function EEGWaveformChart({
               name="EEG Signal"
               dot={false}
               stroke="#e2e8f0"
-              strokeWidth={1.7}
+              strokeWidth={compact ? 1.2 : 1.7}
               isAnimationActive={false}
             />
           </LineChart>
